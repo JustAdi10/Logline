@@ -1,6 +1,33 @@
 #!/usr/bin/env node
 
 require('dotenv').config();
+const pkg = require("./package.json");
+const args = process.argv.slice(2);
+
+// Handle --help flag
+if (args.includes("--help") || args.includes("-h")) {
+  console.log(`
+  Usage: lol [options]
+
+  Git CLI tool that writes your commit messages for you.
+
+  Commands:
+    lol          Generate an AI commit message and commit
+    logline      Same as 'lol'
+
+  Options:
+    -h, --help   Show this help message
+    -v, --version Show the current version
+  `);
+  process.exit(0);
+}
+
+// Handle --version flag
+if (args.includes("--version") || args.includes("-v")) {
+  console.log(pkg.version);
+  process.exit(0);
+}
+
 const { execSync } = require("child_process");
 const prompts = require("prompts");
 
