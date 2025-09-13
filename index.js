@@ -60,9 +60,13 @@ function generateFallbackMessage(files) {
 
 (async () => {
   try {
+    // Auto-stage all changes
+    console.log("Staging all changes...");
+    execSync("git add .", { stdio: "inherit" });
+    
     const output = execSync("git diff --staged --name-only").toString().trim();
     if (!output) {
-      console.log("No staged files found. Did you run `git add`?");
+      console.log("No changes to commit. Working directory clean.");
       process.exit(1);
     }
 
