@@ -1,0 +1,22 @@
+{
+  "name": "logline",
+  "version": "1.0.0",
+  "description": "Git CLI tool that writes my commit messages for me.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "bin": {
+    "gch" : "./index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JustAdi10/Logline.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/JustAdi10/Logline/issues"
+  },
+  "homepage": "https://github.com/JustAdi10/Logline#readme"
+}
