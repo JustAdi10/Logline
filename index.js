@@ -1,47 +1,54 @@
-#! /usr/bin/env node
+#!/usr/bin/env node
 
 const { execSync } = require("child_process");
+const prompts = require("prompts");
 
-// Find and list all staged files
 try {
-  const stagedFiles = execSync("git diff --staged --name-only", {
-    encoding: "utf-8",
-  })
-    .split("\n")
-    .filter((file) => file.trim() !== "");
-
-  if (stagedFiles.length === 0) {
-    console.log("No files are staged for commit.");
-    process.exit(0);
+  const output = execSync("git diff --staged --name-only").toString().trim();
+  if (!output) {
+    console.log("No staged files found. Did you run `git add`?");
+    process.exit(1);
   }
 
-  console.log("Staged files:");
-  stagedFiles.forEach((file) => console.log(file));
+  const files = output.split("\n");
 
-  // basic type guessing
-  const typeChecks = [
-    { type: "test", match: (f) => f.match(/test/i) },
-    { type: "chore", match: (f) => f.endsWith("package.json") },
-    {
-      type: "feat",
-      match: (f) => f.startsWith("src/") || f.startsWith("lib/"),
-    },
-    { type: "docs", match: (f) => f.startsWith("docs/") || f === "README.md" },
-    { type: "fix", match: (f) => f.match(/fix|bug/i) },
-    { type: "style", match: (f) => f.match(/style|format/i) },
-    { type: "refactor", match: (f) => f.match(/refactor/i) },
-    { type: "perf", match: (f) => f.match(/perf|performance/i) },
-    { type: "other", match: (f) => f.match(/index/i) },
-  ];
+  // crude type guesser (use your improved rules here)
   let type = "chore";
-  for (const check of typeChecks) {
-    if (stagedFiles.some(check.match)) {
-      type = check.type;
-      break;
+  if (files.some(f => f.endsWith("package.json"))) type = "chore";
+  else if (files.some(f => f.startsWith("src/"))) type = "feat";
+  else if (files.some(f => f.match(/test/i))) type = "test";
+  else if (files.some(f => f.match(/\.(md|txt)$/))) type = "docs";
+
+  const header = `${type}: update ${files.length === 1 ? files[0] : files.length + " files"}`;
+
+  console.log("\nSuggested commit message:");
+  console.log("   " + header + "\n");
+
+  (async () => {
+    const response = await prompts({
+      type: "confirm",
+      name: "use",
+      message: "Use this commit message?",
+      initial: true
+    });
+
+    if (response.use) {
+      execSync(`git commit -m "${header}"`, { stdio: "inherit" });
+    } else {
+      // Prompt user to enter their own commit message
+      const custom = await prompts({
+        type: "text",
+        name: "msg",
+        message: "Enter your commit message (leave blank to abort):"
+      });
+      if (custom.msg && custom.msg.trim() !== "") {
+        execSync(`git commit -m "${custom.msg.replace(/\"/g, '\\"')}"`, { stdio: "inherit" });
+      } else {
+        console.log("Commit aborted.");
+      }
     }
-  }
-  console.log("Guessed commit type:", type);
-} catch (error) {
-  console.error("Error executing git command:", error.message);
-  process.exit(1);
+  })();
+
+} catch (err) {
+  console.error("Error:", err.message);
 }
