@@ -7,7 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "bin": {
-    "gch" : "./index.js"
+    "lol": "./index.js"
   },
   "repository": {
     "type": "git",
@@ -18,5 +18,8 @@
   "bugs": {
     "url": "https://github.com/JustAdi10/Logline/issues"
   },
-  "homepage": "https://github.com/JustAdi10/Logline#readme"
+  "homepage": "https://github.com/JustAdi10/Logline#readme",
+  "dependencies": {
+    "prompts": "^2.4.2"
+  }
 }

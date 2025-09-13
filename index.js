@@ -18,14 +18,29 @@ try {
   console.log("Staged files:");
   stagedFiles.forEach((file) => console.log(file));
 
-  //curude type guessing
-  let type  = "chore";
-  if(FileSystem.some(f => f.includes("test"))) type = "test";
-  else if (FileSystem.some(f => f.includes("package.json"))) type = "chore";
-  else if (FileSystem.some(f => f.includes("src/") || f.includes("lib/"))) type = "feat";
-  else if (FileSystem.some(f => f.includes("docs/") || f.includes("README.md"))) type = "docs";
-  else if (FileSystem.some(f => f.includes("fix") || f.includes("bug"))) type = "fix";
-
+  // basic type guessing
+  const typeChecks = [
+    { type: "test", match: (f) => f.match(/test/i) },
+    { type: "chore", match: (f) => f.endsWith("package.json") },
+    {
+      type: "feat",
+      match: (f) => f.startsWith("src/") || f.startsWith("lib/"),
+    },
+    { type: "docs", match: (f) => f.startsWith("docs/") || f === "README.md" },
+    { type: "fix", match: (f) => f.match(/fix|bug/i) },
+    { type: "style", match: (f) => f.match(/style|format/i) },
+    { type: "refactor", match: (f) => f.match(/refactor/i) },
+    { type: "perf", match: (f) => f.match(/perf|performance/i) },
+    { type: "other", match: (f) => f.match(/index/i) },
+  ];
+  let type = "chore";
+  for (const check of typeChecks) {
+    if (stagedFiles.some(check.match)) {
+      type = check.type;
+      break;
+    }
+  }
+  console.log("Guessed commit type:", type);
 } catch (error) {
   console.error("Error executing git command:", error.message);
   process.exit(1);
