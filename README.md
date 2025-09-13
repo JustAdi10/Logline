@@ -1,157 +1,261 @@
-#  Logline
+#  LoglineLogline
 
-**Git CLI tool that writes my commit messages for me.**
 
-Logline makes committing code frictionless and consistent without forcing you to remember Conventional Commit rules or manually type messages every time. It uses AI to analyze your code changes and generates meaningful commit messages automatically.
 
-##  Features
+**Git CLI tool that writes your commit messages for you.**Git CLI tool that writes your commit messages for you.
 
-- ** AI-Powered Messages**: Uses Google Gemini to analyze your git diff and generate contextually relevant commit messages
-- ** Conventional Commits**: Automatically follows conventional commit format (`type(scope): description`)
-- ** Interactive CLI**: Simple yes/no prompts with option to customize messages
-- ** Smart Analysis**: Understands code changes, not just filenames
-- ** Zero Configuration**: Works out of the box with minimal setup
-- ** Fallback Support**: Works even without AI when API is unavailable
 
-##  Installation
 
-### Global Installation
-```bash
-npm install -g logline
-```
+[![npm version]](https://www.npmjs.com/package/@justadi10/logline)Logline makes committing code frictionless and consistent. It automatically generates meaningful, conventional commit messages using AI, so you don’t have to waste time remembering formats or writing vague messages.
 
-### Local Development
-```bash
+[![GitHub issues](https://img.shields.io/github/issues/JustAdi10/Logline)](https://github.com/JustAdi10/Logline/issues)
+
+[![GitHub stars](https://img.shields.io/github/stars/JustAdi10/Logline)](https://github.com/JustAdi10/Logline/stargazers)Features
+
+
+
+Logline makes committing code frictionless and consistent. It automatically generates meaningful, conventional commit messages using AI, so you don't have to waste time remembering formats or writing vague messages.AI-powered commit message generation using Google Gemini
+
+
+
+##  FeaturesConventional Commits format enforced automatically (type(scope): description)
+
+
+
+-  **AI-powered commit message generation** using Google GeminiInteractive CLI with option to edit or override messages
+
+-  **Conventional Commits format** enforced automatically (`type(scope): description`)
+
+-  **Interactive CLI** with option to edit or override messages  Smart analysis of actual code changes, not just filenames
+
+-  **Smart analysis** of actual code changes, not just filenames
+
+-  **Works out of the box** with minimal setupWorks out of the box with minimal setup
+
+-  **Fallback mode** for when AI is unavailable
+
+-  **Auto-staging** - automatically runs `git add .` for youFallback mode for when AI is unavailable
+
+
+
+##  InstallationInstallation
+
+Global Install
+
+```bashnpm install -g @justadi10/logline
+
+npm install -g @justadi10/logline
+
+```Local Development
+
 git clone https://github.com/JustAdi10/Logline.git
-cd Logline
+
+##  Setupcd Logline
+
 npm install
-npm link  # Makes 'lol' command available globally
+
+1. Get a free Gemini API key from [Google AI Studio](https://makersuite.google.com/app/apikey)npm link   # Makes 'lol' command available globally
+
+
+
+2. Set your API key:Setup
+
+
+
+```bashGet a free Gemini API key from Google AI Studio
+
+# Option A: Use .env file
+
+echo "GEMINI_API_KEY=your-api-key-here" > .env  Set your API key:
+
+
+
+# Option B: Export directly# Option A: Use .env
+
+export GEMINI_API_KEY="your-api-key-here"echo "GEMINI_API_KEY=your-api-key-here" > .env  
+
 ```
 
-## 🔑 Setup
+# Option B: Export directly
 
-1. Get your free Gemini API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
+##  Usageexport GEMINI_API_KEY="your-api-key-here"
 
-2. Create a `.env` file in your project directory:
-```bash
-echo "GEMINI_API_KEY=your-api-key-here" > .env
+
+
+### Basic WorkflowUsage
+
+Basic Workflow
+
+```bash# Stage changes
+
+# Make your changesgit add .
+
+echo "new feature" >> app.js
+
+# Generate commit with AI
+
+# That's it! Just run:lol   # or 'logline'
+
+lol   # or 'logline'
+
 ```
 
-3. Or set it as an environment variable:
-```bash
-export GEMINI_API_KEY="your-api-key-here"
-```
+Example:
 
-##  Usage
+*No need for `git add` - Logline does it automatically!*
 
-### Basic Usage
-
-1. Stage your changes as usual:
-```bash
-git add .
-```
-
-2. Run Logline instead of `git commit`:
-```bash
-lol  # or `logline` if you prefer
-```
-
-3. Review the AI-generated commit message:
-```
 Generating commit message with AI...
 
-Suggested commit message:
-   feat: add AI-powered commit message generation
+### Example Output
 
-✔ Use this commit message? › (Y/n)
+Suggested commit message:
+
+```   feat: add AI-powered commit message generation
+
+Staging all changes...
+
+Generating commit message with AI...✔ Use this commit message? › (Y/n)
+
+
+
+Suggested commit message:
+
+   feat: add AI-powered commit message generationOptions:
+
+
+
+✔ Use this commit message? › (Y/n)Yes → Commits with the AI suggestion
+
 ```
 
-4. Choose your action:
-   - **Yes**: Commits with the suggested message
-   - **No**: Prompts you to enter a custom message
-   - **Ctrl+C**: Cancels the operation
+No → Lets you enter your own message
 
-### Example Workflow
+### Your Options
 
-```bash
-# Make your changes
-echo "console.log('Hello World')" >> app.js
+Ctrl+C → Cancels the commit
 
-# Stage changes
+- **Yes** → Commits with the AI suggestion
+
+- **No** → Lets you enter your own message  Example Flow
+
+- **Ctrl+C** → Cancels the commitecho "console.log('Hello World')" >> app.js
+
 git add app.js
 
-# Let Logline handle the commit
-lol
-```
+##  Example Messageslol
 
-##  Example Messages
 
-Instead of generic messages, Logline generates contextual ones:
 
-| Traditional | Logline Generated |
-|------------|-------------------|
-| `update app.js` | `feat: add hello world logging functionality` |
-| `fix bug` | `fix: resolve undefined variable error in auth` |
-| `change readme` | `docs: update installation instructions` |
+Instead of generic messages, Logline generates contextual ones:Example Messages
 
-##  How It Works
+Traditional	Logline Generated
 
-1. **Analyzes Changes**: Reads your `git diff --staged` to understand what actually changed
-2. **AI Processing**: Sends the diff to Gemini AI with specialized prompts for commit message generation
-3. **Format Enforcement**: Ensures output follows conventional commit standards
-4. **User Control**: Always gives you the final say on the commit message
+| Traditional | Logline Generated |update app.js	feat: add hello world logging functionality
 
-##  Configuration
+|------------|-------------------|fix bug	fix: resolve undefined variable error in auth
+
+| `update app.js` | `feat: add hello world logging functionality` |change readme	docs: update installation instructions
+
+| `fix bug` | `fix: resolve undefined variable error in auth` |Configuration
+
+| `change readme` | `docs: update installation instructions` |Environment Variables
+
+Variable	Description	Required
+
+##  ConfigurationGEMINI_API_KEY	Google Gemini API key	Yes (for AI features)
+
+Fallback Behavior
 
 ### Environment Variables
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `GEMINI_API_KEY` | Your Google Gemini API key | Required for AI features |
+When AI is unavailable, Logline generates file-based commit messages:
+
+| Variable | Description | Required |
+
+|----------|-------------|----------|feat → New files or major additions
+
+| `GEMINI_API_KEY` | Google Gemini API key | Yes (for AI features) |
+
+fix → Patches with “fix”, “bug”, or error handling
 
 ### Fallback Behavior
 
-When AI is unavailable (no API key, network issues, etc.), Logline falls back to intelligent file-based analysis:
+docs → Documentation changes
 
-- `feat`: New source files or significant additions
-- `fix`: Changes containing "fix", "bug", or error handling
-- `docs`: Documentation file changes
-- `test`: Test file modifications  
-- `chore`: Configuration, dependency, or maintenance changes
+When AI is unavailable, Logline generates file-based commit messages:
+
+test → Test file changes
+
+- **feat** → New files or major additions
+
+- **fix** → Patches with "fix", "bug", or error handling  chore → Config, dependencies, or maintenance
+
+- **docs** → Documentation changes
+
+- **test** → Test file changesContributing
+
+- **chore** → Config, dependencies, or maintenance
+
+Fork the repository
 
 ##  Contributing
 
-We welcome contributions! Here's how to get started:
+Create a branch: git checkout -b feature/awesome-feature
 
 1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Make your changes and test them
-4. Use Logline to commit: `lol` 😉
-5. Push and create a pull request
+
+2. Create a branch: `git checkout -b feature/awesome-feature`Make changes and test them
+
+3. Make changes and test them
+
+4. Use `lol` to commit 😉Use lol to commit
+
+5. Push and open a pull request
+
+Push and open a pull request
 
 ##  License
 
-This project is licensed under the ISC License - see the [LICENSE](LICENSE) file for details.
+License
 
-##  Acknowledgments
+Licensed under the ISC License – see [LICENSE](LICENSE).
 
-- **Google Gemini** for powering the AI commit message generation
-- **Conventional Commits** for the commit message format standards
-- The developer community for inspiration on making git workflows more enjoyable
+Licensed under the ISC License – see LICENSE
 
-##  Issues & Support
+##  Acknowledgments.
 
-Found a bug or have a feature request? 
-- [Open an issue](https://github.com/JustAdi10/Logline/issues)
-- Check existing issues before creating a new one
-- Include your OS, Node version, and error messages
 
-##  Stats
 
-[![npm version](https://badge.fury.io/js/logline.svg)](https://www.npmjs.com/package/logline)
-[![GitHub issues](https://img.shields.io/github/issues/JustAdi10/Logline)](https://github.com/JustAdi10/Logline/issues)
-[![GitHub stars](https://img.shields.io/github/stars/JustAdi10/Logline)](https://github.com/JustAdi10/Logline/stargazers)
+- **Google Gemini** for AI-powered commit generationAcknowledgments
+
+- **Conventional Commits** for the commit message format
+
+- The developer community for inspiration on improving git workflowsGoogle Gemini for AI-powered commit generation
+
+
+
+##  Issues & SupportConventional Commits for the commit message format
+
+
+
+- [Open an issue](https://github.com/JustAdi10/Logline/issues)The developer community for inspiration on improving git workflows
+
+- Include OS, Node.js version, and errors when reporting
+
+Issues & Support
 
 ---
 
-**Made with ❤️ by developers, for developers who want better commit messages without the hassle.**
+Open an issue
+
+**Built for developers who want better commit messages without the hassle.**
+Include OS, Node.js version, and errors when reporting
+
+Project Stats
+
+
+
+
+
+
+Built for developers who want better commit messages without the hassle.

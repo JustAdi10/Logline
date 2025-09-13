@@ -1,5 +1,5 @@
 {
-  "name": "logline",
+  "name": "@justadi10/logline",
   "version": "1.0.0",
   "description": "Git CLI tool that writes my commit messages for me.",
   "main": "index.js",
