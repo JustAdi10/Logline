@@ -1,131 +1,81 @@
 #!/usr/bin/env node
 
+require('dotenv').config();
 const { execSync } = require("child_process");
 const prompts = require("prompts");
 
-function analyzeChanges(diffOutput) {
-  const lines = diffOutput.split('\n');
-  let addedLines = 0;
-  let deletedLines = 0;
-  let addedContent = [];
-  let deletedContent = [];
-  let currentFile = '';
-  
-  for (const line of lines) {
-    if (line.startsWith('diff --git')) {
-      currentFile = line.split(' ')[3]?.replace('b/', '') || '';
-    } else if (line.startsWith('+') && !line.startsWith('+++')) {
-      addedLines++;
-      addedContent.push(line.substring(1).trim());
-    } else if (line.startsWith('-') && !line.startsWith('---')) {
-      deletedLines++;
-      deletedContent.push(line.substring(1).trim());
+async function generateCommitMessageWithAI(diff, files) {
+  try {
+    const { GoogleGenerativeAI } = require("@google/generative-ai");
+    
+    // You'll need to set your API key as an environment variable
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      console.log("Warning: GEMINI_API_KEY not set, falling back to simple generation");
+      return generateFallbackMessage(files);
     }
+
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+    const prompt = `Analyze this git diff and generate a concise, conventional commit message. 
+
+Rules:
+- Use conventional commit format: type(scope): description
+- Types: feat, fix, docs, style, refactor, test, chore, ci
+- Keep description under 50 characters
+- Be specific about what changed
+- Don't mention file names unless crucial
+
+Files changed: ${files.join(', ')}
+
+Git diff:
+${diff.length > 4000 ? diff.substring(0, 4000) + '\n... (truncated)' : diff}
+
+Generate only the commit message, nothing else.`;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    let message = response.text().trim();
+    
+    // Clean up the response - remove quotes, extra whitespace, etc.
+    message = message.replace(/^["']|["']$/g, '').trim();
+    
+    return message;
+  } catch (error) {
+    console.log("AI generation failed, using fallback:", error.message);
+    return generateFallbackMessage(files);
   }
-  
-  return {
-    addedLines,
-    deletedLines,
-    addedContent: addedContent.filter(l => l.length > 0),
-    deletedContent: deletedContent.filter(l => l.length > 0),
-    currentFile
-  };
 }
 
-function generateCommitMessage(files, changes) {
-  const { addedLines, deletedLines, addedContent } = changes;
-  
-  // Determine type based on files and changes
+function generateFallbackMessage(files) {
   let type = "chore";
-  let scope = "";
-  let description = "";
-  
-  // File-based type detection (enhanced)
-  if (files.some(f => f.includes('test') || f.includes('spec'))) {
-    type = "test";
-  } else if (files.some(f => f.match(/\.(md|txt|rst)$/))) {
-    type = "docs";
-  } else if (files.some(f => f.includes('package.json'))) {
-    type = "chore";
-  } else if (files.some(f => f.includes('.github') || f.includes('ci') || f.includes('build'))) {
-    type = "ci";
-  } else if (files.length === 1 && files[0].includes('README')) {
-    type = "docs";
-  }
-  
-  // Content-based analysis for better type detection
-  const contentText = addedContent.join(' ').toLowerCase();
-  
-  if (contentText.includes('function') || contentText.includes('const') || contentText.includes('class')) {
-    if (addedLines > deletedLines * 2) {
-      type = "feat";
-    } else if (deletedLines > addedLines) {
-      type = "refactor";
-    }
-  }
-  
-  if (contentText.includes('fix') || contentText.includes('bug') || contentText.includes('error')) {
-    type = "fix";
-  }
-  
-  if (contentText.includes('todo') || contentText.includes('fixme')) {
-    type = "chore";
-  }
-  
-  // Generate description based on changes
-  if (files.length === 1) {
-    const fileName = files[0].split('/').pop();
-    
-    if (addedLines > deletedLines * 3) {
-      description = `add new functionality to ${fileName}`;
-    } else if (deletedLines > addedLines * 2) {
-      description = `remove unused code from ${fileName}`;
-    } else if (Math.abs(addedLines - deletedLines) < 5) {
-      description = `refactor ${fileName}`;
-    } else {
-      description = `update ${fileName}`;
-    }
-  } else {
-    if (addedLines > deletedLines * 2) {
-      description = `add new features across ${files.length} files`;
-    } else if (deletedLines > addedLines * 2) {
-      description = `clean up code across ${files.length} files`;
-    } else {
-      description = `update ${files.length} files`;
-    }
-  }
-  
-  // Detect scope from file paths
-  const commonPaths = files.map(f => f.split('/')[0]);
-  const uniquePaths = [...new Set(commonPaths)];
-  if (uniquePaths.length === 1 && uniquePaths[0] !== files[0]) {
-    scope = uniquePaths[0];
-  }
-  
-  // Format final message
-  const scopeString = scope ? `(${scope})` : "";
-  return `${type}${scopeString}: ${description}`;
+  if (files.some(f => f.endsWith("package.json"))) type = "chore";
+  else if (files.some(f => f.startsWith("src/"))) type = "feat";
+  else if (files.some(f => f.match(/test/i))) type = "test";
+  else if (files.some(f => f.match(/\.(md|txt)$/))) type = "docs";
+
+  return `${type}: update ${files.length === 1 ? files[0] : files.length + " files"}`;
 }
 
 (async () => {
   try {
-    const stagedFiles = execSync("git diff --staged --name-only").toString().trim();
-    if (!stagedFiles) {
+    const output = execSync("git diff --staged --name-only").toString().trim();
+    if (!output) {
       console.log("No staged files found. Did you run `git add`?");
       process.exit(1);
     }
 
-    const files = stagedFiles.split("\n");
+    const files = output.split("\n");
     
-    // Get the actual diff content
-    const diffOutput = execSync("git diff --staged").toString();
-    const changes = analyzeChanges(diffOutput);
+    // Get the full diff for AI analysis
+    const diff = execSync("git diff --staged").toString();
     
-    const header = generateCommitMessage(files, changes);
+    console.log("Generating commit message with AI...");
+    const header = await generateCommitMessageWithAI(diff, files);
 
     console.log("\nSuggested commit message:");
-    console.log("   " + header);
-    console.log(`\nChanges: +${changes.addedLines} -${changes.deletedLines} lines\n`);
+    console.log("   " + header + "\n");
 
     const response = await prompts({
       type: "confirm",
