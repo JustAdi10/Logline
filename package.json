@@ -7,13 +7,14 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "bin": {
-    "lol": "./index.js"
+    "lol": "./index.js",
+    "logline": "./index.js"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/JustAdi10/Logline.git"
   },
-  "author": "",
+  "author": "Aditya Ravikant Pawar",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/JustAdi10/Logline/issues"
