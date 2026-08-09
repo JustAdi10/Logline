@@ -38,17 +38,33 @@ function runGit(args, options = {}) {
 }
 
 function resolveModelName() {
-  return process.env.GEMINI_MODEL || 'gemini-2.0-flash';
+  return process.env.GEMINI_MODEL?.trim() || 'gemini-2.0-flash-001';
+}
+
+function getModelCandidates() {
+  return [resolveModelName(), 'gemini-2.0-flash-001', 'gemini-2.0-flash']
+    .filter(Boolean)
+    .filter((name, index, all) => all.indexOf(name) === index)
+    .filter((name) => !name.includes('gemini-1.5'));
+}
+
+function extractFallbackReason(error) {
+  if (!error) return 'Unknown Gemini error';
+  if (typeof error.message === 'string') {
+    return error.message.split('\n')[0].trim();
+  }
+  return String(error);
 }
 
 async function generateCommitMessageWithAI(diff, files) {
+  const fallbackMessage = generateFallbackMessage(files);
   try {
     const { GoogleGenerativeAI } = require('@google/generative-ai');
     const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
-      console.log('Warning: GEMINI_API_KEY not set, using fallback generation');
-      return generateFallbackMessage(files);
+      console.log('AI is unavailable right now. Using a local fallback commit message.');
+      return fallbackMessage;
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
@@ -68,11 +84,10 @@ ${diff.length > 4000 ? `${diff.substring(0, 4000)}\n... (truncated)` : diff}
 
 Generate only the commit message, nothing else.`;
 
-    const candidates = [resolveModelName(), 'gemini-1.5-flash', 'gemini-1.5-pro'];
-    const uniqueCandidates = [...new Set(candidates.filter(Boolean))];
+    const candidates = getModelCandidates();
 
     let lastError;
-    for (const modelName of uniqueCandidates) {
+    for (const modelName of candidates) {
       try {
         const model = genAI.getGenerativeModel({ model: modelName });
         const result = await model.generateContent(prompt);
@@ -80,16 +95,21 @@ Generate only the commit message, nothing else.`;
         let message = response.text().trim();
         message = message.replace(/^['"`]+|['"`]+$/g, '').trim();
 
-        return message || generateFallbackMessage(files);
+        if (message) {
+          return message;
+        }
       } catch (error) {
         lastError = error;
       }
     }
 
-    throw lastError || new Error('Unable to generate a message with Gemini');
+    const reason = extractFallbackReason(lastError);
+    console.log(`AI is unavailable right now (${reason}). Using a local fallback commit message.`);
+    return fallbackMessage;
   } catch (error) {
-    console.log('AI generation failed, using fallback:', error.message);
-    return generateFallbackMessage(files);
+    const reason = extractFallbackReason(error);
+    console.log(`AI is unavailable right now (${reason}). Using a local fallback commit message.`);
+    return fallbackMessage;
   }
 }
 
@@ -97,23 +117,23 @@ function generateFallbackMessage(files = []) {
   const normalized = (files || []).filter(Boolean).map((file) => file.toLowerCase());
 
   if (normalized.some((file) => /package(-lock)?\.json$|pnpm-lock\.yaml$/.test(file))) {
-    return 'chore: update dependencies or tooling';
+    return 'chore: update tooling and dependencies';
   }
 
   if (normalized.some((file) => file.startsWith('src/') || file.includes('/src/'))) {
-    return 'feat: update source implementation';
+    return 'feat: improve the current implementation';
   }
 
   if (normalized.some((file) => /(^|\/)(test|tests|spec)(\/|$)/.test(file) || /test/i.test(file))) {
-    return 'test: add or update tests';
+    return 'test: improve test coverage and reliability';
   }
 
   if (normalized.some((file) => /\.(md|txt|rst)$/.test(file))) {
-    return 'docs: update documentation';
+    return 'docs: refresh project documentation';
   }
 
   if (normalized.some((file) => /\.json$/.test(file))) {
-    return 'chore: update configuration';
+    return 'chore: adjust project configuration';
   }
 
   return 'chore: update project files';
@@ -219,5 +239,6 @@ module.exports = {
   generateCommitMessageWithAI,
   parseArgs,
   main,
-  resolveModelName
+  resolveModelName,
+  getModelCandidates
 };

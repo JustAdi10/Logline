@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const { generateFallbackMessage, parseArgs, resolveModelName } = require('../index.js');
+const { generateFallbackMessage, parseArgs, resolveModelName, getModelCandidates } = require('../index.js');
 
 test('generateFallbackMessage chooses a feature label for source changes', () => {
   const message = generateFallbackMessage(['src/index.js']);
@@ -21,5 +21,12 @@ test('parseArgs recognizes help and version flags', () => {
 test('resolveModelName uses the configured override when present', () => {
   process.env.GEMINI_MODEL = 'gemini-2.5-flash';
   assert.equal(resolveModelName(), 'gemini-2.5-flash');
+  delete process.env.GEMINI_MODEL;
+});
+
+test('getModelCandidates avoids deprecated Gemini 1.5 names', () => {
+  process.env.GEMINI_MODEL = 'gemini-1.5-flash';
+  const candidates = getModelCandidates();
+  assert.ok(candidates.every((name) => !name.includes('gemini-1.5')));
   delete process.env.GEMINI_MODEL;
 });
